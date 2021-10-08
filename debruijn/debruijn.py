@@ -68,7 +68,7 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    fq=open(fastq_file)
+    fq=open(fastq_file, "r")
     for line in fq :
         if line.startswith("@") or line.startswith("+") or line.startswith("J"):
             continue
@@ -139,16 +139,36 @@ def solve_out_tips(graph, ending_nodes):
     pass
 
 def get_starting_nodes(graph):
-    pass
+    starting_nodes = []
+    node_list = list(graph.nodes)
+    for node in node_list:
+        node_pred = list(graph.predecessors(node))
+        if len(node_pred) == 0 :
+            starting_nodes.append(node)
 
 def get_sink_nodes(graph):
-    pass
+    ending_nodes = []
+    node_list = list(graph.nodes)
+    for node in node_list:
+        node_succ = list(graph.successors(node))
+        if len(node_pred) == 0 :
+            ending_nodes.append(node)
 
 def get_contigs(graph, starting_nodes, ending_nodes):
-    pass
+    tuples = []
+    for i in range(0, len(starting_nodes)-1, 1):
+        for j in range(i+1, len(ending_nodes), 1):
+            for path in nx.all_simple_paths(graph, source = starting_nodes, target = ending_nodes):
+                contig = path[0]
+                for nexts in path:
+                    contig = contig + nexts[-1]
+                tuples.append([contig, len(contig)])
 
 def save_contigs(contigs_list, output_file):
-    pass
+    save = open(output_file, "a")
+    for i in range(0, len(contigs_list), 1):
+        save.write(">contig_{} len={}".format(i, contigs_list[1]))
+        save.write(fill(contigs_list[0]))
 
 
 def fill(text, width=80):
