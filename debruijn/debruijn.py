@@ -73,15 +73,20 @@ def read_fastq(fastq_file):
         if line.startswith("@") or line.startswith("+") or line.startswith("J"):
             continue
         else :
-            yield line
+            yield line.strip()
     fq.close()
 
 
 def cut_kmer(read, kmer_size):
-    for i in range(0, len(read),kmer_size) :
-        seq=[]
-        seq.append(read[i], read[i+1], read[i+2])
-        yield seq
+    i = 0
+    j = i+(kmer_size-1)
+    while j != len(read):
+        if i+(kmer_size-1) >= len(read):
+            yield (read[i:])
+            i = len(read)
+        else :
+            yield (read[i:i+kmer_size])
+            i = i+1
 
 
 def build_kmer_dict(fastq_file, kmer_size):
@@ -95,7 +100,16 @@ def build_kmer_dict(fastq_file, kmer_size):
     return kmer_dict
 
 def build_graph(kmer_dict):
-    pass
+    kmer_list = list(kmer_dict.keys())
+    graph = nx.DiGraph()
+    for i in range(0,len(kmer_list),1) :
+        prefixe = len(kmer_list[i])-1
+        suffixe = len(kmer_list[i])
+        val_1 = kmer_list[i][0:prefixe]
+        val_2 = kmer_list[i][1:suffixe]
+        weight = kmer_dict[kmer_list[i]]
+        graph.add_edge(val_1, val_2, weight = weight)
+    return graph
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
