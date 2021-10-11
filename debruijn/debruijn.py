@@ -172,7 +172,7 @@ def simplify_bubbles(graph):
 		    if ancest_node != None:
 			bubble = True
 			break
-	if ancest_node != None:
+	if bubble:
 	    break
     if bubble:
 	graph = simplify_bubbles(solve_bubble(graph, ancest_node, node))
@@ -183,20 +183,20 @@ def solve_entry_tips(graph, starting_nodes):
     graph_nodes = list(graph)
     for node in graph_nodes:
 	path_list = []
-	len_path = []
+	path_length = []
+	weight_avg_list = []
 	list_pred = list(graph.predecessors(node))
 	if len(list_pred) > 1:
 	    for start in starting_nodes:
 		try:
 		    for path in nx.all_simple_paths(graph, source = start, target = node):
 			path_list.append(path)
-			len_path.append(len(path))
+			path_length.append(len(path))
+			weight_avg_list.append(path_average_weight(graph, path))
 		except:
 		    pass
-	max_path = path_list[len_path.index(max(len_path))]
-	path_list.remove(max_path)
-	graph = remove_paths(graph, path_list = path_list, 
-			     delete_entry_node = True, delete_sink_node = False)
+	graph = select_best_path(graph, path_list, path_length, weight_avg_list, 
+                     delete_entry_node=True, delete_sink_node=False)
     return graph
 
 
@@ -204,20 +204,20 @@ def solve_out_tips(graph, ending_nodes):
     graph_nodes = list(graph)
     for node in graph_nodes:
 	path_list = []
-	len_path = []
-	list_pred = list(graph.predecessors(node))
+	path_length = []
+	weight_avg_list = []
+	list_pred = list(graph.successors(node))
 	if len(list_pred) > 1:
 	    for end in ending_nodes:
 		try:
 		    for path in nx.all_simple_paths(graph, source = node, target = end):
 			path_list.append(path)
-			len_path.append(len(path))
+			path_length.append(len(path))
+			weight_avg_list.append(path_average_weight(graph, path))
 		except:
 		    pass
-	max_path = path_list[len_path.index(max(len_path))]
-	path_list.remove(max_path)
-	graph = remove_paths(graph, path_list = path_list, 
-			     delete_entry_node = False, delete_sink_node = True)
+	graph = select_best_path(graph, path_list, path_length, weight_avg_list, 
+                     delete_entry_node=False, delete_sink_node=True)
     return graph
 
 
