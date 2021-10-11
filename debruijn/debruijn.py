@@ -172,23 +172,30 @@ def simplify_bubbles(graph):
 		    if ancest_node != None:
 			bubble = True
 			break
-	if bubble:
-	    graph = simplify_bubbles(solve_bubble(ancest_node, node))
+	if ancest_node != None:
+	    break
+    if bubble:
+	graph = simplify_bubbles(solve_bubble(graph, ancest_node, node))
     return graph
 
 
 def solve_entry_tips(graph, starting_nodes):
     graph_nodes = list(graph)
     for node in graph_nodes:
+	path_list = []
+	len_path = []
 	list_pred = list(graph.predecessors(node))
 	if len(list_pred) > 1:
 	    for start in starting_nodes:
 		try:
 		    for path in nx.all_simple_paths(graph, source = start, target = node):
 			path_list.append(path)
+			len_path.append(len(path))
 		except:
 		    pass
-	graph = remove_paths(graph, path_list = list(min(path_list)), 
+	max_path = path_list[len_path.index(max(len_path))]
+	path_list.remove(max_path)
+	graph = remove_paths(graph, path_list = path_list, 
 			     delete_entry_node = True, delete_sink_node = False)
     return graph
 
@@ -196,15 +203,20 @@ def solve_entry_tips(graph, starting_nodes):
 def solve_out_tips(graph, ending_nodes):
     graph_nodes = list(graph)
     for node in graph_nodes:
+	path_list = []
+	len_path = []
 	list_pred = list(graph.predecessors(node))
 	if len(list_pred) > 1:
 	    for end in ending_nodes:
 		try:
 		    for path in nx.all_simple_paths(graph, source = node, target = end):
 			path_list.append(path)
+			len_path.append(len(path))
 		except:
 		    pass
-	graph = remove_paths(graph, path_list = list(min(path_list)), 
+	max_path = path_list[len_path.index(max(len_path))]
+	path_list.remove(max_path)
+	graph = remove_paths(graph, path_list = path_list, 
 			     delete_entry_node = False, delete_sink_node = True)
     return graph
 
