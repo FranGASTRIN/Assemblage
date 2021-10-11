@@ -96,7 +96,7 @@ def build_kmer_dict(fastq_file, kmer_size):
                 kmer_dict[read] = 1
             else:
                 kmer_dict[read] += 1
-    return kmer_dict
+    return(kmer_dict)
 
 def build_graph(kmer_dict):
     kmer_list = list(kmer_dict.keys())
@@ -108,7 +108,7 @@ def build_graph(kmer_dict):
         val_2 = kmer_list[i][1:suffixe]
         weight = kmer_dict[kmer_list[i]]
         graph.add_edge(val_1, val_2, weight = weight)
-    return graph
+    return(graph)
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
@@ -122,11 +122,11 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
 	    graph.remove_nodes_from(path[1:])
         if delete_entry_node= False and delete_sink_node= False:
 	    graph.remove_nodes_from(path[1:sink])
-    return graph
+    return(graph)
 
 def std(data):
     st_dev = statistics.pstdev(data)
-    return st_dev
+    return(st_dev)
 
 
 def select_best_path(graph, path_list, path_length, weight_avg_list, 
@@ -139,12 +139,12 @@ def select_best_path(graph, path_list, path_length, weight_avg_list,
 	best_path = path_list[randint(0,len(path_list)-1)]
     path_list.remove(best_path)
     graph = remove_paths(graph, path_list, delete_entry_node, delete_sink_node)
-    return graph
+    return(graph)
 
 
 def path_average_weight(graph, path):
     avg_weight = statistics.mean([d["weight"] for (u, v, d) in graph.subgraph(path).edges(data=True)])
-    return avg_weight 
+    return(avg_weight) 
 
 
 def solve_bubble(graph, ancestor_node, descendant_node):
@@ -157,30 +157,29 @@ def solve_bubble(graph, ancestor_node, descendant_node):
 	weight_avg_list.append(path_average_weight(graph, path))
     graph = select_best_path(graph, path_list, path_length, weight_avg_list, 
                      delete_entry_node=False, delete_sink_node=False)
-    return graph
+    return(graph)
 
 
 def simplify_bubbles(graph):
     bubble = False
-    graph_nodes = list(graph)
+    graph_nodes = list(graph.nodes)
     for node in graph_nodes:
-	if node in graph_nodes:
-	    list_pred = list(graph.predecessors(node))
-	    if len(list_pred) > 1:
-		for i in range(0 ,len(list_pred), 1):
-		    ancest_node = nx.lowest_common_ancestor(graph, list_pred[i], list_pred[i+1])
-		    if ancest_node != None:
-			bubble = True
-			break
-	if bubble:
-	    break
-    if bubble:
-	graph = simplify_bubbles(solve_bubble(graph, ancest_node, node))
-    return graph
+	list_pred = list(graph.predecessors(node))
+	if len(list_pred) > 1:
+	    for i in range(0 ,len(list_pred)-1, 1):
+		ancest_node = nx.lowest_common_ancestor(graph, list_pred[i], list_pred[i+1])
+		if ancest_node != None:
+		    bubble = True
+		    break
+	    if bubble:
+	        graph = simplify_bubbles(solve_bubble(graph, ancest_node, node))
+	        break
+
+    return(graph)
 
 
 def solve_entry_tips(graph, starting_nodes):
-    graph_nodes = list(graph)
+    graph_nodes = list(graph.nodes)
     for node in graph_nodes:
 	path_list = []
 	path_length = []
@@ -189,19 +188,20 @@ def solve_entry_tips(graph, starting_nodes):
 	if len(list_pred) > 1:
 	    for start in starting_nodes:
 		try:
-		    for path in nx.all_simple_paths(graph, source = start, target = node):
+		    for path in nx.all_simple_paths(graph, start, node):
 			path_list.append(path)
 			path_length.append(len(path))
 			weight_avg_list.append(path_average_weight(graph, path))
 		except:
 		    pass
-	graph = select_best_path(graph, path_list, path_length, weight_avg_list, 
+	    graph = select_best_path(graph, path_list, path_length, weight_avg_list, 
                      delete_entry_node=True, delete_sink_node=False)
-    return graph
+	    break
+    return(graph)
 
 
 def solve_out_tips(graph, ending_nodes):
-    graph_nodes = list(graph)
+    graph_nodes = list(graph.nodes)
     for node in graph_nodes:
 	path_list = []
 	path_length = []
@@ -216,9 +216,10 @@ def solve_out_tips(graph, ending_nodes):
 			weight_avg_list.append(path_average_weight(graph, path))
 		except:
 		    pass
-	graph = select_best_path(graph, path_list, path_length, weight_avg_list, 
+	    graph = select_best_path(graph, path_list, path_length, weight_avg_list, 
                      delete_entry_node=False, delete_sink_node=True)
-    return graph
+	    break
+    return(graph)
 
 
 def get_starting_nodes(graph):
@@ -228,7 +229,7 @@ def get_starting_nodes(graph):
         node_pred = list(graph.predecessors(node))
         if len(node_pred) == 0:
             starting_nodes.append(node)
-    return starting_nodes
+    return(starting_nodes)
 
 
 def get_sink_nodes(graph):
@@ -238,7 +239,7 @@ def get_sink_nodes(graph):
         node_succ = list(graph.successors(node))
         if len(node_pred) == 0:
             ending_nodes.append(node)
-    return ending_nodes
+    return(ending_nodes)
 
 
 def get_contigs(graph, starting_nodes, ending_nodes):
@@ -258,15 +259,14 @@ def get_contigs(graph, starting_nodes, ending_nodes):
 		elif path[i][0] == path[i-1][-1]:
 		    contig = contig + path[i][-1]
             tuples.append([contig, len(contig)])
-    return tuples
+    return(tuples)
 
 
 def save_contigs(contigs_list, output_file):
-    save = open(output_file, "a")
-    for i in range(0, len(contigs_list), 1):
-        save.write(">contig_{} len={}".format(i, contigs_list[i][1]))
-        save.write(fill(contigs_list[i][0]))
-    save.close()
+    with open(output_file,"w") as save:
+        for i in range(0, len(contigs_list), 1):
+            save.write(">contig_{} len={}\n".format(i, contigs_list[i][1]))
+            save.write("{}\n".format(fill(contigs_list[i][0])))
 
 
 def fill(text, width=80):
